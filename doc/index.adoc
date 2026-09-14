@@ -1,0 +1,101 @@
+////
+  Copyright 2026 Quintauris GmbH
+  Licensed under the Apache License, Version 2.0 (the "License").
+  https://www.apache.org/licenses/LICENSE-2.0
+////
+
+include::common.adoc[]
+
+= The GNU Layer
+Quintauris <www.quintauris.com> (generated {localdatetime})
+
+== Overview
+
+This layer provides toolchain configuration for https://gcc.gnu.org[GNU GCC] in the context of the {project}, specifically:
+
+* {cmake} toolchain configuration files for the RVI20U32 RISC-V ISA profile
+* Standard section definitions file for the GNU Linker
+* {docker} container definition
+
+== Requirements
+
+* `riscv64-unknown-elf-` toolchain locally available in one of the following locations:
+** `/usr/bin`
+** `/usr/local/bin`
+** `/opt/riscv-gnu-toolchain/bin`
+** `/opt/homebrew/opt/riscv-gnu-toolchain/bin`
+
+or:
+
+* {docker} 28 or higher
+
+== Usage
+
+`rave`, the {project} build and execution orchestrator, supports automatic toolchain management, so that the files above described don't have to be explicitly referenced during the build process.
+
+=== Building locally
+
+Toolchains and targets supported by a particular {project} distribution can be listed as follows (don't forget to bootstrap your {project} distribution first sourcing `bootstrap.sh`):
+
+```
+$ rave list --toolchains
+llvm.clang
+gnu.gcc
+$ rave list --machines
+qemu.virt_rvi20u32
+```
+
+In the following example, machine `qemu.virt_rvi20u32` is configured and built using the `gnu.gcc` toolchain, targeting the RVI20U32 ISA profile:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain gnu.gcc --toolchain-target rvi20u32 --configure --build
+...
+[*] Command completed successfully
+```
+
+Build results can be found under `build/local/gnu_gcc/qemu_virt_rvi20u32`.
+
+Machines can supply a default/recommended toolchain target in their `machine.json` file, so the user initiating a build doesn't have to decide upon and configure a suitable compiler target for the machine in question:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain gnu.gcc --toolchain-target default --configure --build
+...
+[*] Command completed successfully
+```
+
+=== Building on a Docker container
+
+`rave` also supports deployment of toolchain containers and execution of builds within them, so different toolchains can be leveraged with the minimum overhead and system pollution possible. Before using the `gnu.gcc` toolchain container, it has to be first provisioned (i.e. have its image built):
+
+```
+$ rave docker --toolchain gnu.gcc --provision
+...
+[*] Command completed successfully
+```
+
+Then spinned up:
+
+```
+$ rave docker --toolchain gnu.gcc --up
+...
+[*] Command completed successfully
+```
+
+Now that our container is ready:
+
+```
+CONTAINER ID   IMAGE                COMMAND       CREATED          STATUS          PORTS     NAMES
+...
+036c0e133336   rvbl:gnu.gcc         "/bin/bash"   42 seconds ago   Up 42 seconds             rvbl.gnu_gcc
+...
+```
+
+We can command builds using `rave` normally, only adding the `--docker` flag so commands are executed within the container we've just provisioned and spinned up:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain gnu.gcc --toolchain-target default --configure --build --docker
+...
+[*] Command completed successfully
+```
+
+Build results can be found under `build/docker/gnu_gcc/qemu_virt_rvi20u32`.
