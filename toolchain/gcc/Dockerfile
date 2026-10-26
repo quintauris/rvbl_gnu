@@ -9,6 +9,7 @@ RUN apt-get install -y build-essential
 RUN apt-get install -y cmake=3.28.3-1build7
 RUN apt-get install -y gcc-riscv64-unknown-elf=13.2.0-11ubuntu1+12
 RUN apt-get install -y asciidoctor
+RUN apt-get install -y plantuml
 RUN apt-get install -y libglib2.0-dev
 RUN apt-get install -y git
 RUN apt-get install -y rustup
